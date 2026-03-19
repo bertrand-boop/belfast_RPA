@@ -3,10 +3,9 @@ unleashed:
   api_key: ""
 
 search:
-  supplier_code: "Turners"
+  warehouse_code: "W6"
   customer_name: "Tesco"
   depot_name: "Belfast"
-  order_status: "Placed"
 
 email:
   sender: ""

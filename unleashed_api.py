@@ -74,6 +74,7 @@ def find_matching_order(orders: list, config: dict) -> dict | None:
     search = config["search"]
     customer_name = search["customer_name"].lower()
     depot_name = search["depot_name"].lower()
+    warehouse_code = search["warehouse_code"]
 
     target_date = (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%d")
     logger.info("Looking for orders with RequiredDate = %s (today + 3 days)", target_date)
@@ -81,6 +82,11 @@ def find_matching_order(orders: list, config: dict) -> dict | None:
     for so in orders:
         # Must be Placed (not Completed or Parked)
         if so.get("OrderStatus") != "Placed":
+            continue
+
+        # Check warehouse (Turners = W6)
+        warehouse = so.get("Warehouse", {})
+        if (warehouse.get("WarehouseCode") or "") != warehouse_code:
             continue
 
         # Check customer
@@ -98,12 +104,14 @@ def find_matching_order(orders: list, config: dict) -> dict | None:
         required_date = _parse_date(so.get("RequiredDate") or "")
         if required_date == target_date:
             logger.info(
-                "Matched SO %s — Customer: %s, Depot: %s, RequiredDate: %s",
-                so.get("OrderNumber"), cust_name, delivery_name, required_date,
+                "Matched SO %s — Warehouse: %s, Customer: %s, Depot: %s, RequiredDate: %s",
+                so.get("OrderNumber"), warehouse.get("WarehouseName"),
+                cust_name, delivery_name, required_date,
             )
             return so
 
-    logger.warning("No sales order matched customer=%s depot=%s date=%s", customer_name, depot_name, target_date)
+    logger.warning("No sales order matched warehouse=%s customer=%s depot=%s date=%s",
+                    warehouse_code, customer_name, depot_name, target_date)
     return None
 
 
