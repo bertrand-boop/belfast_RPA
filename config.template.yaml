@@ -1,0 +1,20 @@
+unleashed:
+  api_id: ""
+  api_key: ""
+
+search:
+  supplier_code: "Turners"
+  customer_name: "Tesco"
+  depot_name: "Belfast"
+  order_status: "Placed"
+
+email:
+  sender: ""
+  app_password: ""
+  recipients:
+    - "Max.Jordan@turners-distribution.com"
+    - "tesco.irishdocs@turners-distribution.com"
+    - "Ben.Reader@turners-distribution.com"
+    - "Julie.Mallows@turners-distribution.com"
+    - "Nick.Granger@turners-distribution.com"
+  body: "Please find attached the PO report for delivery on {date}."

@@ -1,0 +1,6 @@
+config.yaml
+*.csv
+*.log
+__pycache__/
+*.pyc
+.env
