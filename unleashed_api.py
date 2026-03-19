@@ -5,7 +5,7 @@ import hmac
 import base64
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 
 import requests
@@ -66,18 +66,18 @@ def fetch_sales_orders(config: dict) -> list:
 
 
 def find_matching_order(orders: list, config: dict) -> dict | None:
-    """Find the next upcoming Sales Order for the configured customer and depot.
+    """Find the Sales Order for the configured customer and depot with delivery in 3 days.
 
     Matches on customer name and delivery name/city containing the depot name.
-    Returns the Placed order with the nearest future required date.
+    Returns the order with required date = today + 3 days.
     """
     search = config["search"]
     customer_name = search["customer_name"].lower()
     depot_name = search["depot_name"].lower()
 
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    target_date = (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%d")
+    logger.info("Looking for orders with RequiredDate = %s (today + 3 days)", target_date)
 
-    matching = []
     for so in orders:
         # Must be Placed (not Completed or Parked)
         if so.get("OrderStatus") != "Placed":
@@ -96,22 +96,15 @@ def find_matching_order(orders: list, config: dict) -> dict | None:
             continue
 
         required_date = _parse_date(so.get("RequiredDate") or "")
-        if required_date and required_date >= today:
-            matching.append((required_date, so))
+        if required_date == target_date:
             logger.info(
                 "Matched SO %s — Customer: %s, Depot: %s, RequiredDate: %s",
                 so.get("OrderNumber"), cust_name, delivery_name, required_date,
             )
+            return so
 
-    if not matching:
-        logger.warning("No sales orders matched customer=%s depot=%s", customer_name, depot_name)
-        return None
-
-    # Return the one with the nearest future required date
-    matching.sort(key=lambda x: x[0])
-    chosen_date, chosen_so = matching[0]
-    logger.info("Selected SO %s with RequiredDate %s", chosen_so.get("OrderNumber"), chosen_date)
-    return chosen_so
+    logger.warning("No sales order matched customer=%s depot=%s date=%s", customer_name, depot_name, target_date)
+    return None
 
 
 def get_order_details(so: dict) -> tuple:
