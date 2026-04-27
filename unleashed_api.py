@@ -111,25 +111,58 @@ def find_matching_order(orders: list, config: dict) -> dict | None:
             return so
 
     logger.warning("No sales order matched warehouse=%s customer=%s depot=%s date=%s",
-                    warehouse_code, customer_name, depot_name, target_date)
+                   warehouse_code, customer_name, depot_name, target_date)
     return None
 
 
-def get_order_details(so: dict) -> tuple:
+def get_order_details(so: dict, config: dict) -> tuple:
     """Extract required date and product quantities from a Sales Order.
 
+    Filters line items to only those whose ProductCode appears in
+    config['search']['product_codes']. If product_codes is missing or empty,
+    all line items are returned (preserving previous behaviour).
     Returns (required_date_str, {product_code: quantity}).
     """
     required_date = _parse_date(so.get("RequiredDate") or "")
-
     lines = so.get("SalesOrderLines", [])
+
+    allowed_codes = set(config.get("search", {}).get("product_codes") or [])
+    if allowed_codes:
+        logger.info(
+            "Filtering line items to %d configured ProductCodes: %s",
+            len(allowed_codes), ", ".join(sorted(allowed_codes)),
+        )
+
     quantities = {}
+    skipped = []
     for line in lines:
         product = line.get("Product", {})
         code = product.get("ProductCode", "")
         qty = int(line.get("OrderQuantity", 0))
+
+        if allowed_codes and code not in allowed_codes:
+            skipped.append(code)
+            continue
+
         quantities[code] = qty
         logger.info("  %s: %d", code, qty)
 
-    logger.info("SO %s — RequiredDate: %s, %d line items", so.get("OrderNumber"), required_date, len(quantities))
+    if skipped:
+        logger.info(
+            "Skipped %d line item(s) not in product_codes filter: %s",
+            len(skipped), ", ".join(skipped),
+        )
+
+    # Surface any configured SKUs that weren't on the order — likely worth knowing
+    missing = allowed_codes - set(quantities.keys())
+    if missing:
+        logger.warning(
+            "Configured ProductCodes not present on SO %s: %s",
+            so.get("OrderNumber"), ", ".join(sorted(missing)),
+        )
+
+    logger.info(
+        "SO %s — RequiredDate: %s, %d matched line items",
+        so.get("OrderNumber"), required_date, len(quantities),
+    )
     return required_date, quantities

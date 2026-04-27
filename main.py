@@ -43,7 +43,6 @@ def run_job():
     """Execute the full pipeline: fetch PO → populate Excel → email."""
     logger.info("=== Job started at %s ===", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     excel_path = None
-
     try:
         config = load_config()
 
@@ -56,8 +55,8 @@ def run_job():
             logger.error("No matching sales order found — aborting")
             return
 
-        # Step 3: Extract data from order
-        required_date, quantities = get_order_details(so)
+        # Step 3: Extract data from order (filtered to configured ProductCodes)
+        required_date, quantities = get_order_details(so, config)
 
         # Step 4: Build Excel from template
         excel_path = build_excel(required_date, quantities)
@@ -66,10 +65,8 @@ def run_job():
         send_email(excel_path, required_date, config)
 
         logger.info("=== Job completed successfully ===")
-
     except Exception:
         logger.exception("Job failed")
-
     finally:
         if excel_path and os.path.exists(excel_path):
             os.remove(excel_path)

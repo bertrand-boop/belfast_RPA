@@ -6,6 +6,14 @@ search:
   warehouse_code: "W6"
   customer_name: "Tesco"
   depot_name: "Belfast"
+  product_codes:
+    - "BOSH0077"
+    - "BOSH0079"
+    - "BOSH0080"
+    - "BOSH0101"
+    - "BOSH0102"
+    - "BOSH0103"
+    - "BOSH0104"
 
 email:
   sender: ""

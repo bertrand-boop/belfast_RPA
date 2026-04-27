@@ -10,15 +10,15 @@ logger = logging.getLogger(__name__)
 
 TEMPLATE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "template.xlsx")
 
-# Product code to row mapping in the template
+# Product code to row mapping in the template.
 PRODUCT_ROWS = {
     "BOSH0077": 46,
     "BOSH0079": 47,
-    "BOSH0081": 48,
-    "BOSH0080": 49,
-    "BOSH0090": 50,
-    "BOSH0082": 51,
-    "BOSH0089": 52,
+    "BOSH0080": 48,
+    "BOSH0101": 49,
+    "BOSH0102": 50,
+    "BOSH0103": 51,
+    "BOSH0104": 52,
 }
 
 
